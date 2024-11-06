@@ -20,10 +20,6 @@ Project Title: Google Merchandise Store ETL and Analytics
    ```bash
    git clone https://github.com/ayazhantn/data-engineering-term-project-1
 
-2. **Connect to the repository
-   ```bash
-   $ cd Data-Engineering
-
 
 ## Repository Structure
 
@@ -35,6 +31,8 @@ The repository is organized as follows:
     - `items.csv`: Data related to items.
   - **`script/`**: Contains SQL scripts used in the project.
     - `term-project-1.sql`: The SQL script for the project.
+  - **`EER_TP1.png`**: EER.
+  - **`factSales.png`**: Fact table - analytic.
 
 - **`README.md`**: This file, which contains the documentation for the project.
 
@@ -53,8 +51,9 @@ The project consists of the following components:
 
 # Data Source Details
 Dataset: a subset of the anonymized Google Analytics event data for the Google Merchandise Store. The timeframe of the data: November 2020 – January 2021 (3 months). There are 3 files: events.csv, items.csv and users.csv, which contain information on purchase steps, items sold and users activity, respectively. The full dataset is available as a BigQuery Public Dataset: ga4_obfuscated_sample_ecommerce dataset.
+
 Files:
-  - events.csv: Data on events, including user data, their activities such as adding to the cart, proceeding to checkout, purchasing, and others.
+  - events1.csv: Data on events, including user data, their activities such as adding to the cart, proceeding to checkout, purchasing, and others.
   - items.csv: Details on products, categories, and prices.
   - users.csv: Data on users, their lifetime value and the date of their first touch.
 
@@ -162,11 +161,31 @@ FactSales combines information from events, items, and users.
 
 
 # ETL Pipeline Design
-Explanation of the ETL pipeline design.
+The ETL pipeline involves following steps: 
+
+- Extract:
+
+MySQL queries to extract data from events1, items, and users csv files.
+
+(Since I am using Load Data Infile command, I could not apply the stored procedure here.)
+
+- Transform:
+
+Use stored procedures to handle transformations.
+
+- Load:
+
+Load the transformed data into the FactSales table in the analytical layer.
 
 # Data Mart and Views
-Details on data mart and views.
+
+This project creates and analyzes various views to summarize customer purchase behavior:
+
+- **Customer Purchase Summary by Device and Country**: Helps understand user demographics and preferences, aiding in future marketing and targeting strategies.
+- **Sales Summary by Item and Category**: Identifies popular products and price ranges, optimizing product performance for pricing and marketing strategies.
+- **User Lifetime Value (LTV) Analysis**: Analyzes user purchase behavior to help with marketing and targeting strategies based on user value.
+
 
 # Conclusion and Future Work
-Summary and potential directions for future work.
 
+The project might be improved by adding more stored procedures as ETL pipeline, analysing more questions, adding more triggers.
