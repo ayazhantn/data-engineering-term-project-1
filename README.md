@@ -156,7 +156,7 @@ They capture user demographics, product details, and time-related data.
 
 FactSales combines information from events, items, and users.
 
-![EER](Term1/fastSales.png)
+![factSales](https://github.com/ayazhantn/data-engineering-term-project-1/blob/main/Term1/factSales.png)
 
 
 
