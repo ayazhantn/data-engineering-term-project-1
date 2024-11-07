@@ -124,10 +124,12 @@ CREATE TABLE MissingValuesSummary (
     column_name VARCHAR(255),
     missing_count INT
 );
+DROP PROCEDURE IF EXISTS CheckMissingValuesForColumn;
 -- The procedure uses a dynamic SQL query
 DELIMITER //
-DROP PROCEDURE IF EXISTS CheckMissingValuesForColumn;
-CREATE PROCEDURE CheckMissingValuesForColumn(IN tbl_name VARCHAR(255), IN col_name VARCHAR(255))
+CREATE PROCEDURE CheckMissingValuesForColumn(
+	IN tbl_name VARCHAR(255), 
+    IN col_name VARCHAR(255))
 BEGIN
 	-- This is a dynamic SQL query to count missing (NULL or empty)
     SET @query = CONCAT(
@@ -143,8 +145,8 @@ BEGIN
     EXECUTE stmt;
 	-- Deallocate the dynamic query
     DEALLOCATE PREPARE stmt;
-END 
-DELIMITER ;
+END; //
+DELIMITER;
 
 -- Loop through 'items' table columns
 CALL CheckMissingValuesForColumn('items', 'item_id');
@@ -215,14 +217,17 @@ GROUP BY user_id
 HAVING COUNT(*) > 1;
 -- Result: all the id's are unique
 
+-- Disable safe update mode (to be able to drop some rows)
+SET SQL_SAFE_UPDATES = 0;
+
 -- 'events' table transformation:
 -- 'events' table does not have a primary key originally:
 -- Add Primary Key to the 'events' table
-ALTER TABLE events ADD COLUMN event_id INT AUTO_INCREMENT PRIMARY KEY;
+ALTER TABLE Events ADD COLUMN event_id INT AUTO_INCREMENT PRIMARY KEY;
 
+DROP PROCEDURE IF EXISTS CheckDuplicatesInEvents;
 -- Check for duplicates in events table
 DELIMITER //
-DROP PROCEDURE IF EXISTS CheckDuplicatesInEvents;
 CREATE PROCEDURE CheckDuplicatesInEvents()
 BEGIN
     -- Temporary table to store the duplicate rows
@@ -239,8 +244,8 @@ BEGIN
 
     -- Clean up by dropping the temporary table
     DROP TEMPORARY TABLE IF EXISTS duplicate_events;
-END //
-DELIMITER ;
+END; //
+DELIMITER;
 
 CALL CheckDuplicatesInEvents();
 -- Result: There are duplicated rows.
@@ -249,29 +254,33 @@ CALL CheckDuplicatesInEvents();
 -- But this duplicates might have occured because of internet problems of the user.
 -- Consider deleting the duplicates:
 
--- Disable safe update mode (to be able to drop some rows)
-SET SQL_SAFE_UPDATES = 0;
-
--- Procedure to delete duplicates
-DELIMITER $$
 DROP PROCEDURE IF EXISTS CleanDuplicateEvents;
+-- Procedure to delete duplicates
+
+DELIMITER //
+
 CREATE PROCEDURE CleanDuplicateEvents()
 BEGIN
     -- Create a temporary table to store the event_ids to keep (the first event per group)
+    DROP TEMPORARY TABLE IF EXISTS temp_events_to_keep;
     CREATE TEMPORARY TABLE temp_events_to_keep AS
     SELECT MIN(event_id) AS event_id
-    FROM events
+    FROM Events
     GROUP BY ga_session_id, user_id, item_id, type, device, date;
     -- Delete the duplicate events that are not in the temp table
-    DELETE FROM events
+    DELETE FROM Events
     WHERE event_id NOT IN (SELECT event_id FROM temp_events_to_keep);
     -- Drop the temporary table after cleaning
     DROP TEMPORARY TABLE IF EXISTS temp_events_to_keep;
-END$$
+END //
 DELIMITER ;
 
--- Delete the duplicates
+-- Disable safe update mode (to be able to drop some rows)
+SET SQL_SAFE_UPDATES = 0;
+
+ALTER TABLE Events ADD COLUMN event_id INT AUTO_INCREMENT PRIMARY KEY;
 CALL CleanDuplicateEvents();
+-- Duplicates are deleted
 
 -- Check for duplicates after cleaning
 CALL CheckDuplicatesInEvents();
@@ -520,9 +529,10 @@ SELECT * FROM UserLTVSummary;
 -- 'factSales' gets data from 'events' table,
 -- so changes in 'events' should lead to changes in 'factSales'.
 
+DROP TRIGGER IF EXISTS after_purchase_insert;
+
 DELIMITER $$
 
-DROP TRIGGER IF EXISTS after_purchase_insert;
 CREATE TRIGGER after_purchase_insert
 AFTER INSERT ON events
 FOR EACH ROW
